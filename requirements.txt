@@ -1,3 +1,5 @@
-# Runtime: the v1.0 app uses only the Python standard library.
+# Requires Python 3.12+
+# Runtime:
+pydantic==2.14.3
 # Development / testing:
 pytest==8.3.3
