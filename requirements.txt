@@ -1,0 +1,3 @@
+# Runtime: the v1.0 app uses only the Python standard library.
+# Development / testing:
+pytest==8.3.3
