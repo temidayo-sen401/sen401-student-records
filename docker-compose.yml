@@ -1,0 +1,40 @@
+name: school-ops
+
+services:
+  # One-off job: loads data/students.json and data/inventory.csv into SQLite
+  # on the shared volume. --if-empty keeps data written through the API
+  # when the stack is restarted.
+  migrate:
+    build: .
+    command: ["python", "-m", "scripts.migrate", "--if-empty"]
+    volumes:
+      - db-data:/data
+
+  # FastAPI service: starts only after the migration has succeeded
+  api:
+    build: .
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    volumes:
+      - db-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # Client service: calls the API over the Docker network and prints the reports
+  report:
+    build: ./client
+    environment:
+      API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db-data:

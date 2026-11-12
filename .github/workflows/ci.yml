@@ -15,8 +15,19 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
       - name: Run tests
         run: pytest -v
-      - name: Run demo app
-        run: python report.py
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images and start migrate + api (waits until api is healthy)
+        run: docker compose up -d --build --wait api
+      - name: Run the report client against the api (must exit 0)
+        run: docker compose run --rm report
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

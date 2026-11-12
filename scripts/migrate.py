@@ -9,7 +9,10 @@ Steps:
   4. Verify that the row counts and totals in SQLite match the source files.
 
 Usage:
-    python3.12 -m scripts.migrate [--students PATH] [--inventory PATH] [--db PATH]
+    python3.12 -m scripts.migrate [--students PATH] [--inventory PATH] [--db PATH] [--if-empty]
+
+    --if-empty  skip the migration when the database already has data
+                (used by Docker Compose so restarts keep data added via the API)
 """
 
 import argparse
@@ -23,7 +26,16 @@ from app.sources import load_inventory_csv, load_students_json
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
-def migrate(students_path: Path, inventory_path: Path, database: Path) -> None:
+def migrate(students_path: Path, inventory_path: Path, database: Path, if_empty: bool = False) -> None:
+    if if_empty and database.exists():
+        conn = connect(database)
+        init_db(conn)
+        existing = StudentRepository(conn).count() + InventoryRepository(conn).count()
+        conn.close()
+        if existing:
+            print(f"Database {database} already has {existing} rows - migration skipped (--if-empty)")
+            return
+
     students = load_students_json(students_path)
     items = load_inventory_csv(inventory_path)
     print(f"Read {len(students)} students from {students_path.name}")
@@ -73,8 +85,9 @@ def main() -> None:
     parser.add_argument("--students", type=Path, default=DATA_DIR / "students.json")
     parser.add_argument("--inventory", type=Path, default=DATA_DIR / "inventory.csv")
     parser.add_argument("--db", type=Path, default=db_path())
+    parser.add_argument("--if-empty", action="store_true", help="skip if the database already has data")
     args = parser.parse_args()
-    migrate(args.students, args.inventory, args.db)
+    migrate(args.students, args.inventory, args.db, args.if_empty)
 
 
 if __name__ == "__main__":

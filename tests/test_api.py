@@ -64,3 +64,10 @@ def test_inventory_crud_and_conflict(client):
     assert client.get(f"/inventory/{iid}").json()["value"] == 75000.0
     assert "Webcam" in [i["item_name"] for i in client.get("/inventory/low-stock").json()]
     assert client.delete(f"/inventory/{iid}").status_code == 204
+
+
+def test_migrate_if_empty_keeps_existing_data(tmp_path, capsys):
+    db = tmp_path / "keep.db"
+    migrate(DATA_DIR / "students.json", DATA_DIR / "inventory.csv", db)
+    migrate(DATA_DIR / "students.json", DATA_DIR / "inventory.csv", db, if_empty=True)
+    assert "migration skipped" in capsys.readouterr().out
