@@ -19,4 +19,4 @@ jobs:
       - name: Run tests
         run: pytest -v
       - name: Run demo app
-        run: python app.py
+        run: python report.py
