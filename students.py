@@ -22,8 +22,16 @@ def average_score(data):
 
 
 def add_student(name, score):
+    # Corrective fix: reject non-numeric or out-of-range scores so they
+    # cannot break average_score() later with a TypeError.
+    if isinstance(score, bool) or not isinstance(score, (int, float)):
+        raise ValueError(f"score must be a number, got {score!r}")
+    if not 0 <= score <= 100:
+        raise ValueError(f"score must be between 0 and 100, got {score}")
     students.append({"name": name, "score": score})
 
 
-print("Current Students:", students)
-print("Average Score:", average_score(students))
+# Corrective fix: only print when run directly, not on import.
+if __name__ == "__main__":
+    print("Current Students:", students)
+    print("Average Score:", average_score(students))
