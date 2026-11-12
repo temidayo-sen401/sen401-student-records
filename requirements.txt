@@ -1,5 +1,5 @@
 # Requires Python 3.12+
-# Runtime:
+# Runtime dependencies (installed in the Docker image):
+fastapi==0.162.5
+uvicorn==0.54.0
 pydantic==2.14.3
-# Development / testing:
-pytest==8.3.3
