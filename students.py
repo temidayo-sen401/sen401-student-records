@@ -1,9 +1,23 @@
 """Student data module.
 
 Holds the in-memory list of students and basic operations on it.
+Requires Python 3.12+ (uses the PEP 695 ``type`` statement).
 """
 
-students = [
+from pydantic import BaseModel, Field
+
+# Adaptive: Python 3.12 type alias syntax (PEP 695)
+type StudentRecord = dict[str, str | float]
+
+
+class Student(BaseModel):
+    """Validated student record (Adaptive: Pydantic v2 data validation)."""
+
+    name: str = Field(min_length=1)
+    score: float = Field(ge=0, le=100, strict=True)
+
+
+students: list[StudentRecord] = [
     {"name": "James", "score": 45},
     {"name": "Deborah", "score": 82},
     {"name": "Aisha", "score": 67},
@@ -12,7 +26,7 @@ students = [
 ]
 
 
-def average_score(data):
+def average_score(data: list[StudentRecord]) -> float:
     if len(data) == 0:
         return 0  # Preventive maintenance: avoid division by zero
     total = 0
@@ -21,14 +35,11 @@ def average_score(data):
     return total / len(data)
 
 
-def add_student(name, score):
-    # Corrective fix: reject non-numeric or out-of-range scores so they
-    # cannot break average_score() later with a TypeError.
-    if isinstance(score, bool) or not isinstance(score, (int, float)):
-        raise ValueError(f"score must be a number, got {score!r}")
-    if not 0 <= score <= 100:
-        raise ValueError(f"score must be between 0 and 100, got {score}")
-    students.append({"name": name, "score": score})
+def add_student(name: str, score: float) -> None:
+    # Adaptive: Pydantic validates name and score (number, 0-100).
+    # ValidationError is a subclass of ValueError.
+    student = Student(name=name, score=score)
+    students.append(student.model_dump())
 
 
 # Corrective fix: only print when run directly, not on import.
